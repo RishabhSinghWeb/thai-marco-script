@@ -53,11 +53,12 @@ def process_files():
             dtype={10: str}
         )
         try:
-            shipping_date_index = data.isin(["วันที่ส่งของ"])[0].tolist().index(True)  # finds วันที่ส่งของ in first column
-            shipping_date = data.iloc[shipping_date_index][2]  # third column
+            shipping_date_index = data.isin(["วันที่ส่งของ"])[0].tolist().index(True)  # ค้นหาวันที่ส่งของในคอลัมน์แรก
+            shipping_date = data.iloc[shipping_date_index][2]  # คอลัมน์ที่สาม
         except:
             print("วันที่ส่งของ shipping date not found")
             shipping_date = None
+
         # ตั้งชื่อคอลัมน์ใหม่โดยอิงจากจำนวนคอลัมน์จริง
         num_columns = data.shape[1]
         default_columns = [f'Unnamed_{i}' for i in range(num_columns)]
@@ -80,14 +81,6 @@ def process_files():
             data['เลขที่ใบสั่งซื้อ'] = data['เลขที่ใบสั่งซื้อ'].apply(
                 lambda x: x if re.match(r'^\d+\.\d+$', str(x)) else None
             )
-
-        # # ค้นหาคอลัมน์ "วันที่ส่งของ"
-        # delivery_date_col = find_column_index(data, 'วันที่ส่งของ')
-        # if delivery_date_col:
-        #     data['วันที่ส่งของ'] = data[delivery_date_col].ffill()
-        # else:
-        #     print("not foundd")
-        #     data['วันที่ส่งของ'] = None
 
         # เติมข้อมูลที่ถูก Merge Cell (Forward Fill)
         if 'วันที่สั่งสินค้า' in data.columns:
@@ -118,26 +111,22 @@ def process_files():
                 store2 = store2_match.group(1) if store2_match else None
                 quantity = qty_match.group(1) if qty_match else None
 
-                makro_code = None
-                for col in ['Unnamed_7', 'Unnamed_9', 'Unnamed_5']:
-                    if col in data.columns:
-                        makro_code = extract_makro_code(row[col])
-                        if makro_code:
-                            break
-                makro_code2 = row['Unnamed_6']
+                makro_code = row['Unnamed_6']
                 total_order_amount = row['จำนวนสั่งซื้อ']
 
-                if current_product and store and quantity and makro_code:
+                if current_product and store and quantity:
                     results.append({
                         'วันที่สั่งสินค้า': row['วันที่สั่งสินค้า'] if 'วันที่สั่งสินค้า' in row and first_column else None,
                         'รหัสผู้ผลิต': row['รหัสผู้ผลิต'] if 'รหัสผู้ผลิต' in row and first_column else None,
                         'เลขที่ใบสั่งซื้อ': row['เลขที่ใบสั่งซื้อ'] if 'เลขที่ใบสั่งซื้อ' in row and first_column else None,
-                        'รหัสแม็คโคร': makro_code2,
+                        'รหัสแม็คโคร': makro_code,
                         'ชื่อสินค้า': current_product,
                         'Store': store,
                         'จำนวนสินค้า': quantity,
                         'รวมจำนวนสั่งซื้อ': current_order_quantity,
                         'วันที่ส่งของ': shipping_date if first_column else None,
+                        '':None,
+                        'ไฟล์ต้นฉบับ': input_file_path.split('/')[-1] if first_column else None  # ชื่อไฟล์ต้นฉบับ
                     })
                     first_column = False
 
