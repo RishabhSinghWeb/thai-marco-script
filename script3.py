@@ -1,8 +1,7 @@
 import pandas as pd  # type: ignore
 import re
-from tkinter import Tk, filedialog
+from tkinter import Tk, filedialog, Button, Label, messagebox
 from pathlib import Path
-home = Path.home()
 
 # ฟังก์ชันสำหรับตรวจสอบรหัสแม็คโคร
 def extract_makro_code(value):
@@ -32,10 +31,10 @@ def process_files():
     )
 
     if not input_file_paths:
-        print("ไม่มีไฟล์ถูกเลือก")
+        messagebox.showinfo("ไม่มีไฟล์ถูกเลือก", "กรุณาเลือกไฟล์ Excel")
         return
 
-    # กำหนดตำแหน่งไฟล์ผลลัพธ์
+    home = Path.home()
     output_file_path = str(home) + r'\Documents\Makro\Report'
     Path(output_file_path).mkdir(parents=True, exist_ok=True)
     output_file_path += r'\Processed_PO_Result.xlsx'
