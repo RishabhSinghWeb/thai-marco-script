@@ -96,6 +96,7 @@ def process_files():
         results = []
         current_product = None
         first_column = True
+        previous_order_quantity = ''
         for i, row in data.iterrows():
             if pd.notna(row['Unnamed_1']) and isinstance(row['Unnamed_1'], str) and 'STORE' not in row['Unnamed_1']:
                 current_product = row['Unnamed_1']
@@ -114,7 +115,12 @@ def process_files():
                 makro_code = row['Unnamed_6']
                 total_order_amount = row['จำนวนสั่งซื้อ']
 
-                if current_product and store and quantity:
+                current_order_quantity_copy = current_order_quantity
+                if current_order_quantity != row['จำนวนสั่งซื้อ'] and current_order_quantity == previous_order_quantity:
+                    current_order_quantity = ''
+                previous_order_quantity = current_order_quantity_copy
+
+                if current_product and store and quantity and makro_code==makro_code:
                     results.append({
                         'วันที่สั่งสินค้า': row['วันที่สั่งสินค้า'] if 'วันที่สั่งสินค้า' in row and first_column else None,
                         'รหัสผู้ผลิต': row['รหัสผู้ผลิต'] if 'รหัสผู้ผลิต' in row and first_column else None,
@@ -125,8 +131,6 @@ def process_files():
                         'จำนวนสินค้า': quantity,
                         'รวมจำนวนสั่งซื้อ': current_order_quantity,
                         'วันที่ส่งของ': shipping_date if first_column else None,
-                        '':None,
-                        'ไฟล์ต้นฉบับ': input_file_path.split('/')[-1] if first_column else None  # ชื่อไฟล์ต้นฉบับ
                     })
                     first_column = False
 
