@@ -37,7 +37,7 @@ def process_files():
             # อ่านข้อมูลตั้งแต่แถวที่ 23 และกำหนด dtype คอลัมน์ที่ 10 เป็นข้อความ
             data = pd.read_excel(
                 input_file_path,
-                skiprows=23,
+                skiprows=22,
                 header=None,
                 engine='openpyxl',
                 dtype={10: str}
@@ -135,7 +135,6 @@ def process_files():
 
         # เพิ่มผลลัพธ์ของไฟล์นี้ลงในผลลัพธ์รวม
         all_results.extend(results)
-        break
 
     # รวมผลลัพธ์ทั้งหมดเป็น DataFrame และบันทึกเป็น Excel
     combined_result_df = pd.DataFrame(all_results)
