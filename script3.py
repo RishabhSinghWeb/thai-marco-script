@@ -13,18 +13,8 @@ def extract_makro_code(value):
         return match.group(0)
     return None
 
-# ฟังก์ชันสำหรับค้นหาและระบุคอลัมน์ "วันที่ส่งของ"
-def find_column_index(data, search_text):
-    for col in data.columns:
-        if data[col].astype(str).str.contains(search_text, na=False).any():
-            return col
-    return None
-
-# สร้างฟังก์ชันหลัก
+# ฟังก์ชันสำหรับประมวลผลไฟล์
 def process_files():
-    # เปิดหน้าต่างสำหรับเลือกหลายไฟล์ Excel
-    root = Tk()
-    root.withdraw()  # ซ่อนหน้าต่างหลักของ Tkinter
     input_file_paths = filedialog.askopenfilenames(
         title="เลือกไฟล์ Excel ต้นฉบับ (หลายไฟล์)",
         filetypes=[("Excel Files", "*.xlsx *.xls")]
@@ -43,14 +33,19 @@ def process_files():
     all_results = []
 
     for input_file_path in input_file_paths:
-        # อ่านข้อมูลตั้งแต่แถวที่ 24 และกำหนด dtype คอลัมน์ที่ 10 เป็นข้อความ
-        data = pd.read_excel(
-            input_file_path,
-            skiprows=23,
-            header=None,
-            engine='openpyxl',
-            dtype={10: str}
-        )
+        try:
+            # อ่านข้อมูลตั้งแต่แถวที่ 23 และกำหนด dtype คอลัมน์ที่ 10 เป็นข้อความ
+            data = pd.read_excel(
+                input_file_path,
+                skiprows=23,
+                header=None,
+                engine='openpyxl',
+                dtype={10: str}
+            )
+
+        except Exception as e:
+            messagebox.showerror("ข้อผิดพลาด", f"เกิดข้อผิดพลาดในการประมวลผลไฟล์: {input_file_path}\n\n{e}")
+
         try:
             shipping_date_index = data.isin(["วันที่ส่งของ"])[0].tolist().index(True)  # ค้นหาวันที่ส่งของในคอลัมน์แรก
             shipping_date = data.iloc[shipping_date_index][2]  # คอลัมน์ที่สาม
@@ -109,7 +104,6 @@ def process_files():
 
                 store = store_match.group(1) if store_match else None
                 store2 = store2_match.group(1) if store2_match else None
-                quantity = qty_match.group(1) if qty_match else None
 
                 makro_code = row['Unnamed_6']
                 total_order_amount = row['จำนวนสั่งซื้อ']
@@ -120,6 +114,7 @@ def process_files():
                 previous_order_quantity = current_order_quantity_copy
 
                 if current_product and store and quantity and makro_code==makro_code:
+                    # เพิ่มแถว
                     results.append({
                         'วันที่สั่งสินค้า': row['วันที่สั่งสินค้า'] if 'วันที่สั่งสินค้า' in row and first_column else None,
                         'รหัสผู้ผลิต': row['รหัสผู้ผลิต'] if 'รหัสผู้ผลิต' in row and first_column else None,
@@ -139,10 +134,26 @@ def process_files():
 
     # รวมผลลัพธ์ทั้งหมดเป็น DataFrame และบันทึกเป็น Excel
     combined_result_df = pd.DataFrame(all_results)
-    combined_result_df.to_excel(output_file_path, index=False)
+    required_columns = ['รหัสแม็คโคร', 'Store', 'จำนวนสินค้า', 'รวมจำนวนสั่งซื้อ']
+    filtered_result_df = combined_result_df.dropna(subset=required_columns)
 
-    print(f"การประมวลผลเสร็จสิ้น! ไฟล์ผลลัพธ์รวมถูกบันทึกที่: {output_file_path}")
+    try:
+        filtered_result_df.to_excel(output_file_path, index=False)
+        messagebox.showinfo("สำเร็จ!", f"การประมวลผลเสร็จสิ้น! ไฟล์บันทึกที่: {output_file_path}")
+    except Exception as e:
+        messagebox.showerror("ข้อผิดพลาด", f"ไม่สามารถบันทึกไฟล์ได้\n\n{e}")
 
-# เรียกใช้ฟังก์ชัน
+# สร้าง GUI
+def main():
+    # เปิดหน้าต่างสำหรับเลือกหลายไฟล์ Excel
+    root = Tk()
+    root.title("Makro Order Processor")
+    root.geometry("400x200")
+
+    Label(root, text="แอปพลิเคชันประมวลผลใบสั่งซื้อ ", font=("Arial", 14)).pack(pady=10)
+    Button(root, text="เลือกไฟล์และประมวลผล", command=process_files, font=("Arial", 12)).pack(pady=20)
+
+    root.mainloop()
+
 if __name__ == "__main__":
-    process_files()
+    main()
