@@ -98,15 +98,20 @@ def process_files():
 
             if pd.notna(row['Unnamed_1']) and 'STORE' in str(row['Unnamed_1']):
                 store_info = row['Unnamed_1']
-                store_match = re.search(r'STORE\s*(\d{2,3})', store_info)
-                store2_match = re.search(r'STORE.*?(\d{2,3})$', store_info)
-                qty_match = re.search(r'(\d+)$', store_info)
+                store_match = re.search(r'STORE\s*(\d+)', store_info)
+                quantity_match = re.search(r'(\d+)$', store_info)
 
                 store = store_match.group(1) if store_match else None
-                store2 = store2_match.group(1) if store2_match else None
+                quantity = quantity_match.group(1) if quantity_match else None
 
-                makro_code = row['Unnamed_6']
-                total_order_amount = row['จำนวนสั่งซื้อ']
+                makro_code = None
+                for col in ['Unnamed_7', 'Unnamed_9', 'Unnamed_5']:
+                    if col in data.columns:
+                        makro_code = extract_makro_code(row[col])
+                        if makro_code:
+                            break
+                makro_code2 = row['Unnamed_6'] if 'Unnamed_6' in data.columns else None
+                total_order_amount = row['จำนวนสั่งซื้อ'] if 'จำนวนสั่งซื้อ' in row else None
 
                 current_order_quantity_copy = current_order_quantity
                 if current_order_quantity != row['จำนวนสั่งซื้อ'] and current_order_quantity == previous_order_quantity:
@@ -119,7 +124,7 @@ def process_files():
                         'วันที่สั่งสินค้า': row['วันที่สั่งสินค้า'] if 'วันที่สั่งสินค้า' in row and first_column else None,
                         'รหัสผู้ผลิต': row['รหัสผู้ผลิต'] if 'รหัสผู้ผลิต' in row and first_column else None,
                         'เลขที่ใบสั่งซื้อ': row['เลขที่ใบสั่งซื้อ'] if 'เลขที่ใบสั่งซื้อ' in row and first_column else None,
-                        'รหัสแม็คโคร': makro_code,
+                        'รหัสแม็คโคร': makro_code2,
                         'ชื่อสินค้า': current_product,
                         'Store': store,
                         'จำนวนสินค้า': quantity,
